@@ -1,15 +1,21 @@
+from .categories import CategoriesMixin
 from .client import MealieClient
 from .group import GroupMixin
 from .mealplan import MealplanMixin
 from .recipe import RecipeMixin
+from .shopping_list import ShoppingListMixin
+from .tags import TagsMixin
 from .user import UserMixin
 
 
 class MealieFetcher(
     RecipeMixin,
+    CategoriesMixin,
+    TagsMixin,
+    ShoppingListMixin,
+    MealplanMixin,
     UserMixin,
     GroupMixin,
-    MealplanMixin,
     MealieClient,
 ):
     pass

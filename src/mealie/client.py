@@ -33,7 +33,8 @@ class MealieClient:
                 base_url=base_url,
                 headers={
                     "Authorization": f"Bearer {api_key}",
-                    "Content-Type": "application/json",
+                    # Don't set Content-Type here - let httpx set it per request
+                    # This allows multipart/form-data uploads to work correctly
                 },
                 timeout=30.0,  # Set a reasonable timeout for requests
             )
@@ -57,7 +58,13 @@ class MealieClient:
             raise
 
     def _handle_request(self, method: str, url: str, **kwargs) -> Dict[str, Any] | str:
-        """Common request handler with error handling for all API calls."""
+        """Common request handler with error handling for all API calls.
+
+        Supports:
+        - JSON requests via json= parameter
+        - Multipart uploads via files= parameter
+        - Form data via data= parameter
+        """
         try:
             logger.debug(
                 {
@@ -65,6 +72,7 @@ class MealieClient:
                     "method": method,
                     "url": url,
                     "body": kwargs.get("json"),
+                    "has_files": "files" in kwargs,
                 }
             )
 
@@ -74,6 +82,15 @@ class MealieClient:
                 )
             if "json" in kwargs:
                 logger.debug({"message": "Request payload", "payload": kwargs["json"]})
+            if "files" in kwargs:
+                logger.debug({"message": "Request has file upload"})
+
+            # For JSON requests, explicitly set Content-Type
+            # For multipart requests (files), httpx will set the correct Content-Type with boundary
+            if "json" in kwargs and "files" not in kwargs:
+                if "headers" not in kwargs:
+                    kwargs["headers"] = {}
+                kwargs["headers"]["Content-Type"] = "application/json"
 
             response = self._client.request(method, url, **kwargs)
             response.raise_for_status()  # Raise an exception for 4XX/5XX responses
@@ -81,16 +98,39 @@ class MealieClient:
             logger.debug(
                 {"message": "Request successful", "status_code": response.status_code}
             )
+
+            # Handle empty responses (common for DELETE operations)
+            if response.status_code == 204 or (not response.content or len(response.content) == 0):
+                logger.debug({"message": "Response has no content (likely successful DELETE)"})
+                return {"success": True, "message": "Operation completed successfully"}
+
             # Log the response content at debug level
             try:
                 response_data = response.json()
+
+                # Normalize JSON null to success dict (common for DELETE operations)
+                if response_data is None:
+                    logger.debug(
+                        {"message": "Response content is null; normalizing to success payload"}
+                    )
+                    return {"success": True, "message": "Operation completed successfully"}
+
                 logger.debug({"message": "Response content", "data": response_data})
                 return response_data
             except json.JSONDecodeError:
-                logger.debug(
-                    {"message": "Response content (non-JSON)", "content": response.text}
-                )
-                return response.text
+                # If we can't decode JSON but got a successful response, treat as success
+                if response.status_code >= 200 and response.status_code < 300:
+                    logger.debug(
+                        {"message": "Response content (non-JSON but successful)", "content": response.text}
+                    )
+                    if not response.text or response.text.strip() == "":
+                        return {"success": True, "message": "Operation completed successfully"}
+                    return response.text
+                else:
+                    logger.debug(
+                        {"message": "Response content (non-JSON)", "content": response.text}
+                    )
+                    return response.text
 
         except HTTPStatusError as e:
             status_code = e.response.status_code
