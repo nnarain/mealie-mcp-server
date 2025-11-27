@@ -1,3 +1,4 @@
+import uvicorn
 import logging
 import os
 import traceback
@@ -11,6 +12,10 @@ from tools import register_all_tools
 
 # Load environment variables first
 load_dotenv()
+
+# Set uvicorn host/port early so FastMCP picks them up
+os.environ["UVICORN_HOST"] = os.getenv("HOST", "0.0.0.0")
+os.environ["UVICORN_PORT"] = os.getenv("PORT", "8000")
 
 # Get log level from environment variable with INFO as default
 log_level_name = os.getenv("LOG_LEVEL", "INFO")
@@ -47,9 +52,14 @@ register_prompts(mcp)
 register_all_tools(mcp, mealie)
 
 if __name__ == "__main__":
+    import sys
+
+    transport = 'streamable-http'
+
     try:
-        logger.info({"message": "Starting Mealie MCP Server"})
-        mcp.run(transport="stdio")
+        logger.info({"message": "Starting Mealie MCP Server", "transport": transport, "host": os.environ.get("UVICORN_HOST"), "port": os.environ.get("UVICORN_PORT")})
+        # mcp.run(transport=transport)
+        uvicorn.run(mcp.streamable_http_app, host=os.environ.get("UVICORN_HOST"), port=int(os.environ.get("UVICORN_PORT")))
     except Exception as e:
         logger.critical(
             {"message": "Fatal error in Mealie MCP Server", "error": str(e)}
