@@ -3,10 +3,39 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 
 
+class IngredientUnit(BaseModel):
+    id: Optional[str] = None
+    name: str
+    pluralName: Optional[str] = None
+    description: str = ""
+    extras: Optional[Dict[str, Any]] = None
+    fraction: bool = True
+    abbreviation: str = ""
+    pluralAbbreviation: Optional[str] = ""
+    useAbbreviation: bool = False
+    aliases: List[Any] = Field(default_factory=list)
+    createdAt: Optional[str] = None
+    updatedAt: Optional[str] = None
+
+
+class IngredientFood(BaseModel):
+    id: Optional[str] = None
+    name: str
+    pluralName: Optional[str] = None
+    description: str = ""
+    extras: Optional[Dict[str, Any]] = None
+    labelId: Optional[str] = None
+    label: Optional[Any] = None
+    aliases: List[Any] = Field(default_factory=list)
+    householdsWithIngredientFood: List[str] = Field(default_factory=list)
+    createdAt: Optional[str] = None
+    updatedAt: Optional[str] = None
+
+
 class RecipeIngredient(BaseModel):
     quantity: Optional[float] = None
-    unit: Optional[str] = None
-    food: Optional[str] = None
+    unit: Optional[IngredientUnit] = None
+    food: Optional[IngredientFood] = None
     note: str
     isFood: Optional[bool] = True
     disableAmount: Optional[bool] = False
