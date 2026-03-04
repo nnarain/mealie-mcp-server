@@ -36,7 +36,7 @@ class RecipeIngredient(BaseModel):
     quantity: Optional[float] = None
     unit: Optional[IngredientUnit] = None
     food: Optional[IngredientFood] = None
-    note: str
+    note: Optional[str] = None
     isFood: Optional[bool] = True
     disableAmount: Optional[bool] = False
     display: Optional[str] = None
