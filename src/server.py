@@ -30,8 +30,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger("mealie-mcp")
 
-mcp = FastMCP("mealie")
-mcp._transport_security = TransportSecuritySettings(enable_dns_rebinding_protection=False)
+mcp = FastMCP("mealie", transport_security=TransportSecuritySettings(
+    enable_dns_rebinding_protection=False
+))
 
 MEALIE_BASE_URL = os.getenv("MEALIE_BASE_URL")
 MEALIE_API_KEY = os.getenv("MEALIE_API_KEY")
