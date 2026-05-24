@@ -7,6 +7,8 @@ from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
 from mcp.server.transport_security import TransportSecuritySettings
 
+from starlette.middleware.cors import CORSMiddleware
+
 from mealie import MealieFetcher
 from prompts import register_prompts
 from tools import register_all_tools
@@ -62,7 +64,9 @@ if __name__ == "__main__":
     try:
         logger.info({"message": "Starting Mealie MCP Server", "transport": transport, "host": os.environ.get("UVICORN_HOST"), "port": os.environ.get("UVICORN_PORT")})
         # mcp.run(transport=transport)
-        uvicorn.run(mcp.streamable_http_app, host=os.environ.get("UVICORN_HOST"), port=int(os.environ.get("UVICORN_PORT")))
+        app = mcp.streamable_http_app()
+        app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+        uvicorn.run(app, host=os.environ.get("UVICORN_HOST"), port=int(os.environ.get("UVICORN_PORT")))
     except Exception as e:
         logger.critical(
             {"message": "Fatal error in Mealie MCP Server", "error": str(e)}
