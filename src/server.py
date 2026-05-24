@@ -5,6 +5,7 @@ import traceback
 
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
+from mcp.server.transport_security import TransportSecuritySettings
 
 from mealie import MealieFetcher
 from prompts import register_prompts
@@ -29,7 +30,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger("mealie-mcp")
 
-mcp = FastMCP("mealie", allowed_hosts=["*"])
+mcp = FastMCP("mealie")
+mcp._transport_security = TransportSecuritySettings(enable_dns_rebinding_protection=False)
 
 MEALIE_BASE_URL = os.getenv("MEALIE_BASE_URL")
 MEALIE_API_KEY = os.getenv("MEALIE_API_KEY")
