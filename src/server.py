@@ -29,7 +29,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger("mealie-mcp")
 
-mcp = FastMCP("mealie")
+mcp = FastMCP("mealie", allowed_hosts=["*"])
 
 MEALIE_BASE_URL = os.getenv("MEALIE_BASE_URL")
 MEALIE_API_KEY = os.getenv("MEALIE_API_KEY")
